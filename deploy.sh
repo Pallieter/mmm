@@ -27,21 +27,47 @@ cp -r frontend/build/web/* dist/public/
 # 4. Create a helper runner script
 cat <<EOF > dist/run.sh
 #!/bin/bash
-export DB_HOST=\${DB_HOST:-localhost}
+
+# Check required environment variables
+missing_vars=0
+
+if [ -z "\$DB_USER" ]; then
+  echo "Error: DB_USER environment variable is not set."
+  missing_vars=1
+fi
+
+if [ -z "\$DB_PASS" ]; then
+  echo "Error: DB_PASS environment variable is not set."
+  missing_vars=1
+fi
+
+if [ -z "\$DB_HOST" ]; then
+  echo "Error: DB_HOST environment variable is not set. (Defaulting to localhost if desired, but explicit is better)"
+  # Optionally set default here if you want to allow it, but failing fast is requested.
+  # We will fail fast for Host as well to be safe, or you can uncomment below.
+  # export DB_HOST=localhost
+  echo "Error: DB_HOST environment variable is not set."
+  missing_vars=1
+fi
+
+if [ -z "\$DB_NAME" ]; then
+    echo "Error: DB_NAME environment variable is not set."
+    missing_vars=1
+fi
+
+if [ \$missing_vars -eq 1 ]; then
+  echo "Exiting due to missing environment variables."
+  exit 1
+fi
+
+# Optional defaults for non-sensitive data
 export DB_PORT=\${DB_PORT:-3306}
-export DB_USER=\${DB_USER:-root}
-export DB_PASS=\${DB_PASS:-password}
-export DB_NAME=\${DB_NAME:-mmm_db}
 export PORT=\${PORT:-8080}
 
-# Serve static files logic would usually be in the dart server,
-# For PoC, we will assume the User runs a separate web server (nginx) for frontend
-# OR we update backend to serve static files.
-# Let's update backend to serve static files for simplicity.
-
+echo "Starting server on port \$PORT..."
 ./server
 EOF
 chmod +x dist/run.sh
 
 echo "Deployment build complete. Artifacts are in ./dist"
-echo "To run: cd dist && ./run.sh"
+echo "To run: cd dist && export DB_HOST=... DB_USER=... DB_PASS=... DB_NAME=... && ./run.sh"

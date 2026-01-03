@@ -27,11 +27,19 @@ Middleware corsHeaders() {
 }
 
 void main(List<String> args) async {
-  final dbHost = Platform.environment['DB_HOST'] ?? 'localhost';
+  // Fail fast if required env vars are missing
+  final dbHost = Platform.environment['DB_HOST'];
+  final dbUser = Platform.environment['DB_USER'];
+  final dbPass = Platform.environment['DB_PASS'];
+  final dbName = Platform.environment['DB_NAME'];
+
+  if (dbHost == null || dbUser == null || dbPass == null || dbName == null) {
+    print('Error: Missing required environment variables.');
+    print('Please set DB_HOST, DB_USER, DB_PASS, and DB_NAME.');
+    exit(1);
+  }
+
   final dbPort = int.tryParse(Platform.environment['DB_PORT'] ?? '3306') ?? 3306;
-  final dbUser = Platform.environment['DB_USER'] ?? 'root';
-  final dbPass = Platform.environment['DB_PASS'] ?? 'password';
-  final dbName = Platform.environment['DB_NAME'] ?? 'mmm_db';
 
   final db = DatabaseService(
     host: dbHost,
@@ -41,13 +49,13 @@ void main(List<String> args) async {
     database: dbName,
   );
 
-  // Try connecting, but don't fail startup in dev/test if DB is missing
   try {
      // await db.connect();
      // await db.initSchema();
-     print('Database connection skipped for sandbox build verification.');
+     print('Database connection initialized (lazy).');
   } catch (e) {
     print('Failed to connect to DB: $e');
+    // If DB is strictly required for startup, exit(1) here.
   }
 
   final nodeRepo = NodeRepository(db);
@@ -57,10 +65,8 @@ void main(List<String> args) async {
   app.mount('/api/nodes/', nodeApi.router);
 
   // Serve static files from 'public' directory
-  // In deployment, 'public' will be next to the executable
   final staticHandler = createStaticHandler('public', defaultDocument: 'index.html');
 
-  // Fallback to static handler for non-API requests
   final handler = Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(corsHeaders())

@@ -22,7 +22,8 @@ This is a PoC for a Task Management System with Mind Map, Tree, and Table views.
    - Create a Google Cloud Project.
    - Create an OAuth 2.0 Client ID for Web.
    - Update `frontend/lib/auth_provider.dart` with your `clientId`.
-   - Update `frontend/web/index.html` (add the meta tag if required by the latest library, though v7 is pure Dart usually).
+   - Update `frontend/web/index.html` (add the meta tag if required).
+   - **Important**: The current `auth_provider.dart` uses a mock implementation for demonstration. Uncomment the real implementation and configure your Client ID for production use.
 
 2. **Database**:
    - Create a MySQL database (e.g., `mmm_db`).
@@ -31,9 +32,14 @@ This is a PoC for a Task Management System with Mind Map, Tree, and Table views.
 ### Running Locally (Development)
 
 1. **Start Backend**:
+   You must set the required environment variables:
    ```bash
    cd backend
+   export DB_HOST=localhost
+   export DB_PORT=3306
+   export DB_USER=root
    export DB_PASS=your_db_pass
+   export DB_NAME=mmm_db
    dart run bin/server.dart
    ```
 
@@ -56,7 +62,10 @@ This is a PoC for a Task Management System with Mind Map, Tree, and Table views.
 3. Run the server:
    ```bash
    cd dist
-   export DB_PASS=your_mysql_password
+   export DB_HOST=localhost
+   export DB_USER=mmm_user
+   export DB_PASS=secret_password
+   export DB_NAME=mmm_db
    export PORT=8080
    ./run.sh
    ```
